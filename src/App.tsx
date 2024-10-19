@@ -43,6 +43,7 @@ const initialCharacterData: CharacterData = {
 
 function App() {
   const [characterData, setCharacterData] = useState<CharacterData[]>([]);
+  const [partySkillCheck, setPartySkillCheck] = useState<{ skill: string, dc: number, results?: { roll: number, character: CharacterData } }>({ skill: 'Acrobatics', dc: 0 });
 
   useEffect(() => {
     const fetcher = async () => {
@@ -57,7 +58,7 @@ function App() {
   const onSave = useCallback(async () => {
     const response = await fetch('https://recruiting.verylongdomaintotestwith.ca/api/{mytscu}/character', {
       method: 'POST',
-      body: JSON.stringify(characterData),
+      body: JSON.stringify(characterData.map(cd => ({ ...cd, skillCheck: { ...cd.skillCheck, roll: undefined } }))),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -72,6 +73,41 @@ function App() {
       </header>
       <button onClick={() => setCharacterData(characterData => [...characterData, { ...initialCharacterData, id: characterData.length + 1 }])}>Add Character</button>
       <button onClick={onSave}>Save</button>
+      <section className="App-section">
+        <p>Party Skill Check</p>
+        <div>
+          <span>Skill:</span>
+          <select value={partySkillCheck.skill} onChange={e => setPartySkillCheck(partySkillCheck => ({ ...partySkillCheck, skill: e.target.value }))}>
+            {SKILL_LIST.map((skill, idx) => <option key={idx} value={skill.name}>{skill.name}</option>)}
+          </select>
+          <span>DC:</span>
+          <input type='number' value={partySkillCheck.dc} onChange={e => setPartySkillCheck(partySkillCheck => ({ ...partySkillCheck, dc: parseInt(e.target.value) }))} />
+          <button onClick={() => {
+            const random = Math.random();
+            const randomInt = Math.floor(random * 20) + 1;
+            let highestScoringCharacter: CharacterData;
+            let highestScore = -Infinity;
+            for (const character of characterData) {
+              const characterSkill = getSkillTotal(character.pointsSpent[partySkillCheck.skill] ?? 0, getModifier(character.attributes[SKILL_LIST.find(skill => skill.name === partySkillCheck.skill)!.attributeModifier]));
+              if (characterSkill > highestScore) {
+                highestScoringCharacter = character;
+              }
+            }
+            setPartySkillCheck(partySkillCheck => ({ ...partySkillCheck, results: {
+              roll: randomInt,
+              character: highestScoringCharacter,
+            } }))
+          }}>Roll</button>
+          {!!partySkillCheck.results
+            && <div>
+              <p>Results</p>
+              <p>Roll: {partySkillCheck.results.roll}</p>
+              <p>Skill: {getSkillTotal(partySkillCheck.results.character.pointsSpent[partySkillCheck.skill] ?? 0, getModifier(partySkillCheck.results.character.attributes[SKILL_LIST.find(skill => skill.name === partySkillCheck.skill)!.attributeModifier]))}</p>
+              <p>Result: {(partySkillCheck.results.roll + getSkillTotal(partySkillCheck.results.character.pointsSpent[partySkillCheck.skill] ?? 0, getModifier(partySkillCheck.results.character.attributes[SKILL_LIST.find(skill => skill.name === partySkillCheck.skill)!.attributeModifier]))) >= partySkillCheck.dc ? 'Success' : 'Failure'}</p>
+            </div>
+          }
+        </div>
+      </section>
       {characterData.map((data, idx) => <div key={idx}>
         <h2>Character {data.id}</h2>
         <section className="App-section">
@@ -135,7 +171,7 @@ function App() {
               const random = Math.random();
               const randomInt = Math.floor(random * 20) + 1;
               setCharacterData(cds => cds.map(cd => cd.id === data.id ? { ...cd, skillCheck: { ...cd.skillCheck, roll: randomInt } } : cd));
-            }}>Role</button>
+            }}>Roll</button>
             {typeof data.skillCheck.roll === 'number'
               && <div>
                 <p>Results</p>
