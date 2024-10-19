@@ -3,6 +3,10 @@ import './App.css';
 import { ATTRIBUTE_LIST, CLASS_LIST, SKILL_LIST } from './consts';
 import { Attributes, Class } from './types';
 
+const getModifier = (ability: number) => {
+  return Math.floor((ability - 10) / 2)
+}
+
 function App() {
   const [num, setNum] = useState<number>(0);
   const [attributeControls, setAttributeControls] = useState<Attributes>({
@@ -14,6 +18,7 @@ function App() {
     'Charisma': 0,
   });
   const [openClassRequirements, setOpenClassRequirements] = useState<Class>();
+  const [pointsSpent, setPointsSpent] = useState<{ [x: string]: number }>({});
 
   return (
     <div className="App">
@@ -29,7 +34,7 @@ function App() {
             <button onClick={() => setAttributeControls(attributeControls => ({ ...attributeControls, [attribute]: attributeControls[attribute] - 1 }))}>
               Decrease
             </button>
-            <span>{attribute}: {attributeControls[attribute]} (Modifier: {Math.floor((attributeControls[attribute] - 10) / 2)})</span>
+            <span>{attribute}: {attributeControls[attribute]} (Modifier: {getModifier(attributeControls[attribute])})</span>
           </div>
         )}
       </section>
@@ -52,12 +57,15 @@ function App() {
         )}
       </section>
       <section className="App-section">
-        <div>
-          Value:
-          {num}
-          <button>+</button>
-          <button>-</button>
-        </div>
+        <p>Skills</p>
+        <p>Total skill points available: {Math.max(0, 10 + 4 * getModifier(attributeControls['Intelligence']))}</p>
+        {SKILL_LIST.map((skill, idx) => <div key={idx}>
+          {skill.name} - points: {pointsSpent[skill.name] ?? 0}
+          <button style={{ display: 'inline' }} onClick={() => setPointsSpent(pointsSpent => ({ ...pointsSpent, [skill.name]: (pointsSpent[skill.name] ?? 0) + 1 }))}>[+]</button>
+          <button style={{ display: 'inline' }}  onClick={() => setPointsSpent(pointsSpent => ({ ...pointsSpent, [skill.name]: (pointsSpent[skill.name] ?? 0) - 1 }))}>[-]</button>
+          modifier ({skill.attributeModifier.slice(0, 3)}): {getModifier(attributeControls[skill.attributeModifier])}
+          total: {(pointsSpent[skill.name] ?? 0) + getModifier(attributeControls[skill.attributeModifier])}
+        </div>)}
       </section>
     </div>
   );
