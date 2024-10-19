@@ -7,11 +7,20 @@ const getModifier = (ability: number) => {
   return Math.floor((ability - 10) / 2)
 }
 
+const getSkillTotal = (pointsSpent: number, ability: number) => {
+  return pointsSpent + ability;
+}
+
 type CharacterData = {
   id: number;
   attributes: Attributes;
   openClassRequirements: Class | null;
   pointsSpent: { [x: string]: number };
+  skillCheck: {
+    skill: string;
+    dc: number;
+    roll?: number;
+  };
 }
 
 const initialCharacterData: CharacterData = {
@@ -26,6 +35,10 @@ const initialCharacterData: CharacterData = {
   },
   openClassRequirements: null,
   pointsSpent: {},
+  skillCheck: {
+    skill: 'Acrobatics',
+    dc: 0,
+  }
 }
 
 function App() {
@@ -106,8 +119,32 @@ function App() {
             <button style={{ display: 'inline' }} onClick={() => setCharacterData(cds => cds.map(cd => cd.id === data.id ? ({ ...cd, pointsSpent: { ...cd.pointsSpent, [skill.name]: (cd.pointsSpent[skill.name] ?? 0) + 1 } }) : cd))}>[+]</button>
             <button style={{ display: 'inline' }}  onClick={() => setCharacterData(cds => cds.map(cd => cd.id === data.id ? ({ ...cd, pointsSpent: { ...cd.pointsSpent, [skill.name]: (cd.pointsSpent[skill.name] ?? 0) - 1 } }) : cd))}>[-]</button>
             modifier ({skill.attributeModifier.slice(0, 3)}): {getModifier(data.attributes[skill.attributeModifier])}
-            total: {(data.pointsSpent[skill.name] ?? 0) + getModifier(data.attributes[skill.attributeModifier])}
+            total: {getSkillTotal(data.pointsSpent[skill.name] ?? 0, getModifier(data.attributes[skill.attributeModifier]))}
           </div>)}
+        </section>
+        <section className="App-section">
+          <p>Skill Check</p>
+          <div>
+            <span>Skill:</span>
+            <select value={data.skillCheck.skill} onChange={e => setCharacterData(cds => cds.map(cd => cd.id === data.id ? { ...cd, skillCheck: { ...cd.skillCheck, skill: e.target.value } } : cd))}>
+              {SKILL_LIST.map((skill, idx) => <option key={idx} value={skill.name}>{skill.name}</option>)}
+            </select>
+            <span>DC:</span>
+            <input type='number' value={data.skillCheck.dc} onChange={e => setCharacterData(cds => cds.map(cd => cd.id === data.id ? { ...cd, skillCheck: { ...cd.skillCheck, dc: parseInt(e.target.value) } } : cd))} />
+            <button onClick={() => {
+              const random = Math.random();
+              const randomInt = Math.floor(random * 20) + 1;
+              setCharacterData(cds => cds.map(cd => cd.id === data.id ? { ...cd, skillCheck: { ...cd.skillCheck, roll: randomInt } } : cd));
+            }}>Role</button>
+            {typeof data.skillCheck.roll === 'number'
+              && <div>
+                <p>Results</p>
+                <p>Roll: {data.skillCheck.roll}</p>
+                <p>Skill: {getSkillTotal(data.pointsSpent[data.skillCheck.skill] ?? 0, getModifier(data.attributes[SKILL_LIST.find(skill => skill.name === data.skillCheck.skill)!.attributeModifier]))}</p>
+                <p>Result: {(data.skillCheck.roll! + getSkillTotal(data.pointsSpent[data.skillCheck.skill] ?? 0, getModifier(data.attributes[SKILL_LIST.find(skill => skill.name === data.skillCheck.skill)!.attributeModifier]))) >= data.skillCheck.dc ? 'Success' : 'Failure'}</p>
+              </div>
+            }
+          </div>
         </section>
       </div>)}
     </div>
