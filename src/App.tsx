@@ -29,7 +29,7 @@ function App() {
             <button onClick={() => setAttributeControls(attributeControls => ({ ...attributeControls, [attribute]: attributeControls[attribute] - 1 }))}>
               Decrease
             </button>
-            <span>{attribute}: {attributeControls[attribute]}</span>
+            <span>{attribute}: {attributeControls[attribute]} (Modifier: {Math.floor((attributeControls[attribute] - 10) / 2)})</span>
           </div>
         )}
       </section>
