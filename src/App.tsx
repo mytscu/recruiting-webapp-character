@@ -64,7 +64,13 @@ function App() {
         <section className="App-section">
           {ATTRIBUTE_LIST.map((attribute, idx) =>
             <div key={idx}>
-              <button onClick={() => setCharacterData(cds => cds.map(cd => cd.id === data.id ? ({ ...cd, attributes: { ...cd.attributes, [attribute]: cd.attributes[attribute] + 1 } }) : cd))}>
+              <button onClick={() => {
+                if (Object.values(data.attributes).reduce((sum, attribute) => sum + attribute, 0) >= 70) {
+                  window.alert('Maximum of 70 across all attributes')
+                  return;
+                }
+                setCharacterData(cds => cds.map(cd => cd.id === data.id ? ({ ...cd, attributes: { ...cd.attributes, [attribute]: cd.attributes[attribute] + 1 } }) : cd));
+              }}>
                 Increase
               </button>
               <button onClick={() => setCharacterData(cds => cds.map(cd => cd.id === data.id ? ({ ...cd, attributes: { ...cd.attributes, [attribute]: cd.attributes[attribute] - 1 } }) : cd))}>
